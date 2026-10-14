@@ -1,0 +1,40 @@
+{
+  "revenue_last_12m": 37563.3153,
+  "yoy_growth": 0.06066127381941144,
+  "seasonal_strength": 0.9727211412135847,
+  "anomaly_months": [],
+  "backtest": {
+    "seasonal_naive": {
+      "mape": 0.054632969891125295,
+      "rmse": 219.21852849631193
+    },
+    "seasonal_trend": {
+      "mape": 0.03313061602608374,
+      "rmse": 145.11517543924163
+    }
+  },
+  "driver_model": {
+    "r_squared": 0.686821513415792,
+    "coefficients": {
+      "const": 7.48859,
+      "promo": 0.01271,
+      "price_index": -0.00179,
+      "temperature": -0.00137,
+      "trend": 0.00588
+    },
+    "t_values": {
+      "const": 9.47,
+      "promo": 5.85,
+      "price_index": -0.24,
+      "temperature": -0.54,
+      "trend": 4.03
+    }
+  },
+  "category_yoy": {
+    "Home": 0.1721,
+    "Beauty": 0.1171,
+    "Electronics": 0.0919,
+    "Grocery": 0.0271,
+    "Apparel": -0.0828
+  }
+}

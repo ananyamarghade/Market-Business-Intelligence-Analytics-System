@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Market & Business Intelligence Analytics System</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{--bg:#FFFFFF;--paper:#FFFFFF;--ink:#1D232B;--mut:#677180;--rule:#DDE1E6;--c1:#1F77B4;--c2:#E8710A;--c3:#2CA02C;--c4:#D62728;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 14px/1.55 "IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif}
+.m,.mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace}
+.page{max-width:1120px;margin:0 auto;padding:24px 18px 56px}
+.top{display:flex;flex-wrap:wrap;justify-content:space-between;gap:16px;align-items:flex-end;padding-bottom:16px;border-bottom:2px solid var(--ink)}
+h1{font-size:clamp(22px,3vw,30px);font-weight:600;margin:0;letter-spacing:-.01em}
+.top p{margin:4px 0 0;color:var(--mut)}
+.ctl{display:flex;gap:12px;flex-wrap:wrap}
+.ctl label{display:flex;flex-direction:column;font-size:12px;color:var(--mut);gap:3px}
+select{font:500 14px "IBM Plex Sans",sans-serif;color:var(--ink);background:var(--paper);border:1px solid var(--rule);border-radius:4px;padding:7px 28px 7px 10px;min-width:150px}
+select:focus-visible{outline:2px solid var(--c1)}
+.stats{display:grid;grid-template-columns:repeat(6,1fr);background:var(--paper);border:1px solid var(--rule);margin:18px 0 8px}
+.stats div{padding:12px 14px;border-right:1px solid var(--rule)}.stats div:last-child{border:0}
+.stats b{display:block;font:500 21px "IBM Plex Mono",monospace;letter-spacing:-.02em}
+.stats span{font-size:12px;color:var(--mut)}
+.pos{color:var(--c3)}.neg{color:var(--c4)}
+.fig{background:var(--paper);border:1px solid var(--rule);margin-top:16px;padding:16px 18px 12px}
+.fig h2{font-size:14px;font-weight:600;margin:0 0 2px}.fig h2 i{font-style:normal;color:var(--mut);font-weight:400}
+.cap{font-size:12.5px;color:var(--mut);margin:8px 0 0;max-width:100ch}
+.cv{position:relative;height:330px}.cv.s{height:210px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.g3 .fig,.g2 .fig{margin-top:16px;min-width:0}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{font-weight:500;color:var(--mut);text-align:right;font-size:12px;border-bottom:1px solid var(--ink);padding:5px 8px}
+td{padding:6px 8px;text-align:right;border-bottom:1px solid var(--rule);font-family:"IBM Plex Mono",monospace;font-size:12.5px}
+th:first-child,td:first-child{text-align:left;font-family:"IBM Plex Sans",sans-serif}
+td:first-child{font-size:13px}
+.hl td{font-weight:500;background:color-mix(in srgb,var(--c3) 10%,transparent)}
+.cm td{text-align:center;padding:9px 4px;border:1px solid var(--paper)}
+.cm th:first-child,.cm td:first-child{border:0;background:none}
+.sx{overflow-x:auto}
+.note{margin-top:20px;font-size:12.5px;color:var(--mut);max-width:110ch;border-top:1px solid var(--rule);padding-top:12px}
+@media(max-width:900px){.stats{grid-template-columns:repeat(2,1fr)}.stats div{border-bottom:1px solid var(--rule)}.g3,.g2{grid-template-columns:1fr}.cv{height:280px}}
+</style></head><body><div class="page">
+<div class="top"><div><h1>Market & Business Intelligence Analytics System</h1>
+<p><span class="mono" id="meta"></span></p></div>
+<div class="ctl"><label>Region<select id="fReg"></select></label><label>Category<select id="fCat"></select></label></div></div>
+<div class="stats" id="stats"></div>
+
+<div class="fig"><h2>Fig. 1 <i>Revenue, fitted model and 6-month forecast with 80% prediction interval</i></h2>
+<div class="cv"><canvas id="main"></canvas></div></div>
+
+<div class="g3">
+<div class="fig"><h2>Fig. 2a <i>Trend component</i></h2><div class="cv s"><canvas id="tr"></canvas></div></div>
+<div class="fig"><h2>Fig. 2b <i>Seasonal component</i></h2><div class="cv s"><canvas id="se"></canvas></div></div>
+<div class="fig"><h2>Fig. 2c <i>Residuals</i></h2><div class="cv s"><canvas id="re"></canvas></div></div></div>
+
+<div class="g2">
+<div class="fig"><h2>Fig. 3 <i>Autocorrelation of detrended revenue</i></h2><div class="cv s"><canvas id="acf"></canvas></div></div>
+<div class="fig"><h2>Fig. 4 <i>Demand shift by category</i></h2><div class="cv s"><canvas id="sh"></canvas></div></div></div>
+
+<div class="g2">
+<div class="fig"><h2>Table 1 <i>Drivers of log revenue (OLS)</i></h2><div class="sx"><table id="ols"></table></div></div>
+<div class="fig"><h2>Table 2 <i>Forecast backtest, last 6 months held out</i></h2><div class="sx"><table id="bt"></table></div></div></div>
+
+<div class="fig"><h2>Fig. 5 <i>Pearson correlation matrix</i></h2><div class="sx"><table class="cm" id="cm"></table></div></div>
+
+</div>
+<script src="data.js"></script>
+<script>
+const MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const N=SALES.months,START=SALES.start;
+const lab=t=>{const k=START[1]+t,m=k%12,y=START[0]+Math.floor(k/12);return{m,y,s:MN[m]+" '"+String(y).slice(2)}};
+const CATS=Object.fromEntries(SALES.categories.map(c=>[c,1]));
+const REGS=Object.fromEntries(SALES.regions.map(r=>[r,1]));
+const REV=SALES.revenue;
+const DRV=SALES.promo.map((p,t)=>({promo:p,price:SALES.price[t],temp:SALES.temp[t],traffic:SALES.traffic[t]}));
+function series(reg,cat){
+  const cs=cat==='All'?Object.keys(CATS):[cat],rs=reg==='All'?Object.keys(REGS):[reg];
+  return Array.from({length:N},(_,t)=>cs.reduce((a,c)=>a+rs.reduce((b,r)=>b+REV[c][r][t],0),0));
+}
+const sum=a=>a.reduce((x,y)=>x+y,0),mean=a=>sum(a)/a.length;
+const fmt=v=>v>=100?'₹'+(v/100).toFixed(2)+' Cr':'₹'+v.toFixed(1)+' L';
+const pct=v=>(v>=0?'+':'')+(v*100).toFixed(1)+'%';
+function corr(a,b){const ma=mean(a),mb=mean(b);let n=0,da=0,db=0;for(let i=0;i<a.length;i++){n+=(a[i]-ma)*(b[i]-mb);da+=(a[i]-ma)**2;db+=(b[i]-mb)**2}return n/Math.sqrt(da*db)}
+const yoy=s=>sum(s.slice(24))/sum(s.slice(12,24))-1;
+
+
+
+function invert(M){const n=M.length,A=M.map((r,i)=>[...r,...Array.from({length:n},(_,j)=>+(i===j))]);for(let i=0;i<n;i++){let p=i;for(let r=i+1;r<n;r++)if(Math.abs(A[r][i])>Math.abs(A[p][i]))p=r;[A[i],A[p]]=[A[p],A[i]];const d=A[i][i];A[i]=A[i].map(v=>v/d);for(let r=0;r<n;r++)if(r!==i){const f=A[r][i];A[r]=A[r].map((v,j)=>v-f*A[i][j])}}return A.map(r=>r.slice(n))}
+function ols(X,y){const n=y.length,k=X[0].length,inv=invert(Array.from({length:k},(_,i)=>Array.from({length:k},(_,j)=>sum(X.map(r=>r[i]*r[j])))));
+ const b=inv.map(row=>sum(row.map((v,j)=>v*sum(X.map((r,q)=>r[j]*y[q])))));const res=y.map((v,i)=>v-sum(X[i].map((x,j)=>x*b[j])));
+ const s2=sum(res.map(e=>e*e))/(n-k),ym=mean(y);return{b,se:inv.map((r,i)=>Math.sqrt(s2*r[i])),r2:1-sum(res.map(e=>e*e))/sum(y.map(v=>(v-ym)**2)),s:Math.sqrt(s2),res}}
+function sd(a){const m=mean(a);return Math.sqrt(sum(a.map(v=>(v-m)**2))/(a.length-1))}
+function fitSeasonal(y,n){const f=ols(Array.from({length:n},(_,t)=>[1,t]),y.slice(0,n).map(Math.log));
+ const tr=t=>Math.exp(f.b[0]+f.b[1]*t),idx=MN.map((_,m)=>{const r=[];for(let t=0;t<n;t++)if(lab(t).m===m)r.push(y[t]/tr(t));return r.length?mean(r):1});
+ const pred=t=>tr(t)*idx[lab(t).m],sig=sd(Array.from({length:n},(_,t)=>Math.log(y[t]/pred(t))));return{pred,sig}}
+const stars=r=>{const a=Math.abs(r);return a>.52?'***':a>.424?'**':a>.329?'*':''};
+let reg='All',cat='All',ch={};
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function mk(id,cfg){ch[id]&&ch[id].destroy();ch[id]=new Chart(document.getElementById(id),cfg)}
+function fill(id,list,cur){const e=document.getElementById(id);e.innerHTML=list.map(o=>`<option ${o===cur?'selected':''}>${o}</option>`).join('')}
+
+function render(){
+ const c1=css('--c1'),c2=css('--c2'),c3=css('--c3'),c4=css('--c4'),mut=css('--mut'),rule=css('--rule'),ink=css('--ink');
+ Chart.defaults.font.family='"IBM Plex Sans",system-ui,sans-serif';Chart.defaults.font.size=11.5;Chart.defaults.color=mut;
+ const ax=(t,o={})=>({title:{display:!!t,text:t},grid:{color:rule},border:{color:rule},...o});
+ const base={maintainAspectRatio:false,animation:false,plugins:{legend:{display:false}}};
+ const s=series(reg,cat),H=6,L=[...Array.from({length:N+H},(_,t)=>lab(t).s)];
+ const trend=s.map((_,t)=>t<6||t>N-7?null:(sum(s.slice(t-5,t+6))+(s[t-6]+s[t+6])/2)/12);
+ const dt=s.map((v,t)=>trend[t]==null?null:v-trend[t]);
+ const sea=MN.map((_,m)=>{const r=dt.filter((v,t)=>v!=null&&lab(t).m===m);return r.length?mean(r):0}),sm=mean(sea),seaC=sea.map(v=>v-sm);
+ const res=s.map((v,t)=>trend[t]==null?null:v-trend[t]-seaC[lab(t).m]),rv=res.filter(v=>v!=null),rs=sd(rv);
+ const an=res.map(v=>v!=null&&Math.abs(v)>2*rs),nAn=an.filter(Boolean).length;
+ const Fs=Math.max(0,1-rs*rs/Math.pow(sd(dt.filter(v=>v!=null)),2));
+ const full=fitSeasonal(s,N),tr=fitSeasonal(s,N-6);
+ const fcast=Array.from({length:H},(_,h)=>{const p=full.pred(N+h),w=full.sig*(1+.04*h)*1.2816;return{p,lo:p*Math.exp(-w),hi:p*Math.exp(w)}});
+ const hold=[...Array(6).keys()].map(i=>N-6+i),act=hold.map(t=>s[t]);
+ const mA=hold.map(t=>s[t-12]),mB=hold.map(t=>tr.pred(t));
+ const mape=p=>mean(p.map((v,i)=>Math.abs(v-act[i])/act[i])),rmse=p=>Math.sqrt(mean(p.map((v,i)=>(v-act[i])**2)));
+ const g=yoy(s),l12=sum(s.slice(24));
+ const y=s.map(Math.log),X=DRV.map((d,t)=>[1,t,d.promo,d.price,d.temp]),f=ols(X,y);
+ const names=['Intercept','Trend (per month)','Promo spend (per index pt)','Price index (per pt)','Temperature (per °C)'];
+
+ document.getElementById('meta').textContent=`n = ${N} months · ${Object.keys(CATS).length} categories · ${Object.keys(REGS).length} regions`;
+ document.getElementById('stats').innerHTML=`
+  <div><b>${fmt(l12)}</b><span>Revenue, last 12 months</span></div>
+  <div><b class="${g>=0?'pos':'neg'}">${pct(g)}</b><span>Year-on-year growth</span></div>
+  <div><b>${MN[mapPeak(sea)]}</b><span>Seasonal peak month</span></div>
+  <div><b>${Fs.toFixed(2)}</b><span>Seasonal strength (0–1)</span></div>
+  <div><b>${(mape(mB)*100).toFixed(1)}%</b><span>Backtest MAPE</span></div>
+  <div><b>${nAn}</b><span>Anomalies (|resid| &gt; 2σ)</span></div>`;
+
+ mk('main',{type:'line',data:{labels:L,datasets:[
+  {label:'PI low',data:[...Array(N).fill(null),...fcast.map(x=>x.lo)],borderWidth:0,pointRadius:0,fill:false},
+  {label:'80% interval',data:[...Array(N).fill(null),...fcast.map(x=>x.hi)],borderWidth:0,pointRadius:0,backgroundColor:c2+'30',fill:'-1'},
+  {label:'Observed',data:[...s,...Array(H).fill(null)],borderColor:c1,borderWidth:2,pointRadius:2,pointBackgroundColor:c1,tension:0},
+  {label:'Model fit',data:[...Array.from({length:N},(_,t)=>full.pred(t)),...Array(H).fill(null)],borderColor:c3,borderWidth:1.5,pointRadius:0,borderDash:[2,2]},
+  {label:'Forecast',data:[...Array(N-1).fill(null),s[N-1],...fcast.map(x=>x.p)],borderColor:c2,borderWidth:2.5,pointRadius:3,pointBackgroundColor:c2},
+  {label:'Anomaly',data:[...an.map((a,t)=>a?s[t]:null),...Array(H).fill(null)],showLine:false,pointStyle:'rectRot',pointRadius:7,pointBorderColor:c4,pointBackgroundColor:'transparent',pointBorderWidth:2}]},
+  options:{...base,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom',labels:{usePointStyle:true,boxWidth:8,filter:i=>i.text!=='PI low'}},tooltip:{filter:i=>i.dataset.label!=='PI low',callbacks:{label:c=>c.dataset.label+': '+fmt(c.parsed.y)}}},scales:{x:{grid:{display:false},ticks:{maxTicksLimit:12}},y:ax('Monthly revenue',{ticks:{callback:fmt}})}}});
+
+ mk('tr',{type:'line',data:{labels:L.slice(0,N),datasets:[{data:trend,borderColor:c1,borderWidth:2.5,pointRadius:0}]},options:{...base,scales:{x:{grid:{display:false},ticks:{maxTicksLimit:5}},y:ax(null,{ticks:{callback:fmt}})}}});
+ mk('se',{type:'bar',data:{labels:MN,datasets:[{data:seaC,backgroundColor:seaC.map(v=>v>=0?c1:c2)}]},options:{...base,scales:{x:{grid:{display:false}},y:ax(null,{ticks:{callback:v=>v.toFixed(0)}})}}});
+ mk('re',{type:'bar',data:{labels:L.slice(0,N),datasets:[{data:res,backgroundColor:an.map(a=>a?c4:c1+'99')},
+  {type:'line',data:Array(N).fill(2*rs),borderColor:c4,borderDash:[4,3],borderWidth:1,pointRadius:0},{type:'line',data:Array(N).fill(-2*rs),borderColor:c4,borderDash:[4,3],borderWidth:1,pointRadius:0}]},options:{...base,scales:{x:{grid:{display:false},ticks:{maxTicksLimit:5}},y:ax(null,{ticks:{callback:v=>v.toFixed(0)}})}}});
+
+ const lf=ols(Array.from({length:N},(_,t)=>[1,t]),s),z=lf.res,zm=mean(z),den=sum(z.map(v=>(v-zm)**2));
+ const acf=Array.from({length:18},(_,k)=>sum(z.slice(0,N-k-1).map((v,i)=>(v-zm)*(z[i+k+1]-zm)))/den),bd=1.96/Math.sqrt(N);
+ mk('acf',{type:'bar',data:{labels:acf.map((_,i)=>i+1),datasets:[{data:acf,backgroundColor:acf.map(v=>Math.abs(v)>bd?c2:c1+'88')},
+  {type:'line',data:Array(18).fill(bd),borderColor:c4,borderDash:[4,3],borderWidth:1,pointRadius:0},{type:'line',data:Array(18).fill(-bd),borderColor:c4,borderDash:[4,3],borderWidth:1,pointRadius:0}]},options:{...base,scales:{x:ax('Lag (months)',{grid:{display:false}}),y:ax('ACF',{min:-1,max:1})}}});
+ const sig=acf.map((v,i)=>Math.abs(v)>bd?i+1:null).filter(Boolean);
+
+ const sh=Object.keys(CATS).map(c=>({c,v:yoy(series(reg,c))})).sort((a,b)=>b.v-a.v);
+ mk('sh',{type:'bar',data:{labels:sh.map(x=>x.c),datasets:[{data:sh.map(x=>x.v*100),backgroundColor:sh.map(x=>x.v>=0?c1:c4)}]},options:{...base,indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>pct(c.parsed.x/100)}}},scales:{x:ax('YoY change (%)'),y:{grid:{display:false}}}}});
+
+ document.getElementById('ols').innerHTML='<tr><th>Variable</th><th>Effect on revenue</th><th>SE (log)</th><th>t</th></tr>'+f.b.map((b,i)=>{const t=b/f.se[i],e=(Math.exp(b)-1)*100;
+  return `<tr class="${i&&Math.abs(t)>2.04?'hl':''}"><td>${names[i]}</td><td>${i?(e>=0?'+':'')+e.toFixed(2)+'%':b.toFixed(2)}</td><td>${f.se[i].toFixed(4)}</td><td>${t.toFixed(1)}</td></tr>`}).join('');
+ const bt=(n,p)=>`<tr class="${n==='Seasonal trend model'?'hl':''}"><td>${n}</td><td>${(mape(p)*100).toFixed(1)}%</td><td>${fmt(rmse(p))}</td></tr>`;
+ document.getElementById('bt').innerHTML='<tr><th>Model</th><th>MAPE</th><th>RMSE</th></tr>'+bt('Seasonal naive (y[t−12])',mA)+bt('Seasonal trend model',mB);
+
+ const V=[['Revenue',s],['Traffic',DRV.map(d=>d.traffic)],['Promo',DRV.map(d=>d.promo)],['Price',DRV.map(d=>d.price)],['Temp.',DRV.map(d=>d.temp)]];
+ document.getElementById('cm').innerHTML='<tr><th></th>'+V.map(v=>`<th style="text-align:center">${v[0]}</th>`).join('')+'</tr>'+V.map(a=>`<tr><td>${a[0]}</td>`+V.map(b=>{const r=corr(a[1],b[1]);return `<td style="background:color-mix(in srgb,${r>=0?c1:c4} ${Math.round(Math.abs(r)*80)}%,transparent);color:${Math.abs(r)>.6?'#fff':ink}">${r.toFixed(2)}${a===b?'':stars(r)}</td>`}).join('')+'</tr>').join('');
+}
+function mapPeak(a){return a.indexOf(Math.max(...a))}
+fill('fReg',['All',...Object.keys(REGS)],reg);fill('fCat',['All',...Object.keys(CATS)],cat);
+document.getElementById('fReg').onchange=e=>{reg=e.target.value;render()};document.getElementById('fCat').onchange=e=>{cat=e.target.value;render()};
+render();
+</script></body></html>
